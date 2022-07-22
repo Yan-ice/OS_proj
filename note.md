@@ -43,7 +43,7 @@ uintptr_t boot_satp;
 
 一级页表首地址(在OS里)：
 
-在kern/mm/pmm.c
+在kern/init/entry.s:
 
 ```
 boot_page_table_sv39:
@@ -53,6 +53,10 @@ boot_page_table_sv39:
     # 设置最后一个页表项，PPN=0x80000，标志位 VRWXAD 均为 1
     .quad (0x80000 << 10) | 0xcf # VRWXAD
 ```
+
+
+
+在kern/mm/pmm.c：
 
 ```
 boot_pgdir = (pte_t*)boot_page_table_sv39;
