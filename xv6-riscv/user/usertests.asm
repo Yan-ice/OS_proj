@@ -3501,7 +3501,7 @@ badarg(char *s)
     2192:	1800                	addi	s0,sp,48
   volatile uint64 a = MAXVA;
     2194:	4785                	li	a5,1
-    2196:	179a                	slli	a5,a5,0x26
+    2196:	1796                	slli	a5,a5,0x25
     2198:	fcf43c23          	sd	a5,-40(s0)
   for( ; a != 0; a <<= 1){
     219c:	fd843783          	ld	a5,-40(s0)

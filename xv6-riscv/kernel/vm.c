@@ -61,8 +61,11 @@ kvminit(void)
 void
 kvminithart()
 {
+  printf("setting SATP...\n");
   w_satp(MAKE_SATP(kernel_pagetable));
+  printf("flushing VMA...\n");
   sfence_vma();
+
 }
 
 // Return the address of the PTE in page table pagetable
@@ -140,6 +143,7 @@ mappages(pagetable_t pagetable, uint64 va, uint64 size, uint64 pa, int perm)
   uint64 a, last;
   pte_t *pte;
 
+  printf("mapping VA %x to PA %x in PT %x\n",va,pa,pagetable);
   if(size == 0)
     panic("mappages: size");
   
