@@ -8,6 +8,9 @@ all: xv6
 qemu:
 	cd $(OS) && \
 	make qemu
+qemu-gdb:
+	cd $(OS) && \
+	make qemu-gdb
 qemu-build:
 	cd $(QEMU_ROOT) \
 	&& rm -rf *-linux-user *-softmmu \
