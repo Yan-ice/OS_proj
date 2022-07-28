@@ -429,6 +429,7 @@ static int get_physical_address(CPURISCVState *env, hwaddr *physical,
     masked_msbs = (addr >> (va_bits - 1)) & mask;
 
     if (masked_msbs != 0 && masked_msbs != mask) {
+	printf("FAILED\n");
         return TRANSLATE_FAIL;
     }
 
@@ -466,6 +467,7 @@ restart:
         if (riscv_feature(env, RISCV_FEATURE_PMP) &&
             !pmp_hart_has_privs(env, pte_addr, sizeof(target_ulong),
             1 << MMU_DATA_LOAD, PRV_S)) {
+		printf("FAIL2\n");
             return TRANSLATE_PMP_FAIL;
         }
 
@@ -482,36 +484,45 @@ restart:
 
         if (!(pte & PTE_V)) {
             /* Invalid PTE */
+		printf("FAIL4\n");
             return TRANSLATE_FAIL;
         } else if (!(pte & (PTE_R | PTE_W | PTE_X))) {
             /* Inner PTE, continue walking */
             base = ppn << PGSHIFT;
         } else if ((pte & (PTE_R | PTE_W | PTE_X)) == PTE_W) {
             /* Reserved leaf PTE flags: PTE_W */
+		printf("FAIL4\n");
             return TRANSLATE_FAIL;
         } else if ((pte & (PTE_R | PTE_W | PTE_X)) == (PTE_W | PTE_X)) {
             /* Reserved leaf PTE flags: PTE_W + PTE_X */
+		printf("FAIL4\n");
             return TRANSLATE_FAIL;
         } else if ((pte & PTE_U) && ((mode != PRV_U) &&
                    (!sum || access_type == MMU_INST_FETCH))) {
             /* User PTE flags when not U mode and mstatus.SUM is not set,
                or the access type is an instruction fetch */
+		printf("FAIL4\n");
             return TRANSLATE_FAIL;
         } else if (!(pte & PTE_U) && (mode != PRV_S)) {
             /* Supervisor PTE flags when not S mode */
+		printf("FAIL4\n");
             return TRANSLATE_FAIL;
         } else if (ppn & ((1ULL << ptshift) - 1)) {
             /* Misaligned PPN */
+		printf("FAIL4\n");
             return TRANSLATE_FAIL;
         } else if (access_type == MMU_DATA_LOAD && !((pte & PTE_R) ||
                    ((pte & PTE_X) && mxr))) {
             /* Read access check failed */
+		printf("FAIL4\n");
             return TRANSLATE_FAIL;
         } else if (access_type == MMU_DATA_STORE && !(pte & PTE_W)) {
             /* Write access check failed */
+		printf("FAIL4\n");
             return TRANSLATE_FAIL;
         } else if (access_type == MMU_INST_FETCH && !(pte & PTE_X)) {
             /* Fetch access check failed */
+		printf("FAIL4\n");
             return TRANSLATE_FAIL;
         } else {
             /* if necessary, set accessed and dirty bits. */
@@ -549,6 +560,7 @@ restart:
                     }
 #endif
                 } else {
+			printf("FAIL5\n");
                     /* misconfigured PTE in ROM (AD bits are not preset) or
                      * PTE is in IO space and can't be updated atomically */
                     return TRANSLATE_FAIL;
@@ -564,6 +576,8 @@ restart:
             } else {
                 *physical = (ppn | (vpn & ((1L << ptshift) - 1))) << PGSHIFT;
             }
+
+	    //printf("pagetable translation:%lx -> %lx\n",*physical, addr);
 
             /* set permissions on the TLB entry */
             if ((pte & PTE_R) || ((pte & PTE_X) && mxr)) {
@@ -581,6 +595,8 @@ restart:
             return TRANSLATE_SUCCESS;
         }
     }
+
+    printf("FAIL6\n");
     return TRANSLATE_FAIL;
 }
 

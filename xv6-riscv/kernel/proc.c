@@ -225,6 +225,7 @@ uchar initcode[] = {
 void
 userinit(void)
 {
+	printf("Starting user init\n");
   struct proc *p;
 
   p = allocproc();
@@ -529,6 +530,7 @@ void
 sleep(void *chan, struct spinlock *lk)
 {
   struct proc *p = myproc();
+  printf("pid %d sleep.\n",p->pid);
   
   // Must acquire p->lock in order to
   // change p->state and then call sched.

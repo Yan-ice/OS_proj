@@ -505,7 +505,7 @@
 #define PTE_PPN_SHIFT       10
 
 /* Leaf page shift amount */
-#define PGSHIFT             12
+#define PGSHIFT             14
 
 /* Default Reset Vector adress */
 #define DEFAULT_RSTVEC      0x1000

@@ -27,25 +27,29 @@ kvmmake(void)
   // uart registers
   kvmmap(kpgtbl, UART0, UART0, PGSIZE, PTE_R | PTE_W);
 
+  printf("mapping uart in %x\n", UART0);
   // virtio mmio disk interface
   kvmmap(kpgtbl, VIRTIO0, VIRTIO0, PGSIZE, PTE_R | PTE_W);
 
+  printf("mapping virtio in %x\n", VIRTIO0);
+  
   // PLIC
   kvmmap(kpgtbl, PLIC, PLIC, 0x400000, PTE_R | PTE_W);
-
+  printf("mapping PLIC in %x\n", PLIC);
   // map kernel text executable and read-only.
   kvmmap(kpgtbl, KERNBASE, KERNBASE, (uint64)etext-KERNBASE, PTE_R | PTE_X);
-
+  printf("mapping kernel text in %x\n", KERNBASE);
   // map kernel data and the physical RAM we'll make use of.
   kvmmap(kpgtbl, (uint64)etext, (uint64)etext, PHYSTOP-(uint64)etext, PTE_R | PTE_W);
 
+  printf("mapping trampoline for trap\n");
   // map the trampoline for trap entry/exit to
   // the highest virtual address in the kernel.
   kvmmap(kpgtbl, TRAMPOLINE, (uint64)trampoline, PGSIZE, PTE_R | PTE_X);
 
   // map kernel stacks
   proc_mapstacks(kpgtbl);
-  
+  printf("kernel pagetable created with VA: %x.\n",kpgtbl);
   return kpgtbl;
 }
 
@@ -61,9 +65,8 @@ kvminit(void)
 void
 kvminithart()
 {
-  printf("setting SATP...\n");
+  printf("setting SATP to address %x...\n",kernel_pagetable);
   w_satp(MAKE_SATP(kernel_pagetable));
-  printf("flushing VMA...\n");
   sfence_vma();
 
 }
@@ -97,6 +100,7 @@ walk(pagetable_t pagetable, uint64 va, int alloc)
       *pte = PA2PTE(pagetable) | PTE_V;
     }
   }
+ /// printf("get final PTE %x at %dth pte in pagetable %x for VA %x, which PA is %x \n",pagetable[PX(0,va)],PX(0,va),pagetable, va, PTE2PA(pagetable[PX(0,va)]));
   return &pagetable[PX(0, va)];
 }
 
@@ -143,12 +147,13 @@ mappages(pagetable_t pagetable, uint64 va, uint64 size, uint64 pa, int perm)
   uint64 a, last;
   pte_t *pte;
 
-  printf("mapping VA %x to PA %x in PT %x\n",va,pa,pagetable);
+
   if(size == 0)
     panic("mappages: size");
   
   a = PGROUNDDOWN(va);
   last = PGROUNDDOWN(va + size - 1);
+  printf("mapping VA %x to PA %x in pagetable %x\n",a,pa,pagetable);
   for(;;){
     if((pte = walk(pagetable, a, 1)) == 0)
       return -1;

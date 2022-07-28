@@ -148,7 +148,7 @@
 #define RISCV_PGLEVEL_BITS		10
 #define SATP_MODE			SATP32_MODE
 #endif
-#define RISCV_PGSHIFT			12
+#define RISCV_PGSHIFT			14
 #define RISCV_PGSIZE			(1 << RISCV_PGSHIFT)
 
 #define CSR_USTATUS			0x0
