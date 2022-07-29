@@ -97,6 +97,7 @@ bread(uint dev, uint blockno)
   b = bget(dev, blockno);
   if(!b->valid) {
     virtio_disk_rw(b, 0);
+
     b->valid = 1;
   }
   return b;

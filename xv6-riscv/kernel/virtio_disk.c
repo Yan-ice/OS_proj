@@ -80,15 +80,15 @@ virtio_disk_init(void)
 
   initlock(&disk.vdisk_lock, "virtio_disk");
 
-  if(*R(VIRTIO_MMIO_MAGIC_VALUE) != 0x74726976 ||
-     *R(VIRTIO_MMIO_VERSION) != 1 ||
-     *R(VIRTIO_MMIO_DEVICE_ID) != 2 ||
-     *R(VIRTIO_MMIO_VENDOR_ID) != 0x554d4551){
 	  printf("%x %x %x %x\n",
 	*R(VIRTIO_MMIO_MAGIC_VALUE),
 	*R(VIRTIO_MMIO_VERSION),
 	*R(VIRTIO_MMIO_DEVICE_ID),
 	*R(VIRTIO_MMIO_VENDOR_ID)	);
+  if(*R(VIRTIO_MMIO_MAGIC_VALUE) != 0x74726976 ||
+     *R(VIRTIO_MMIO_VERSION) != 1 ||
+     *R(VIRTIO_MMIO_DEVICE_ID) != 2 ||
+     *R(VIRTIO_MMIO_VENDOR_ID) != 0x554d4551){
     panic("could not find virtio disk");
   }
   
@@ -219,6 +219,7 @@ virtio_disk_rw(struct buf *b, int write)
   // allocate the three descriptors.
   int idx[3];
   while(1){
+
     if(alloc3_desc(idx) == 0) {
       break;
     }
@@ -275,6 +276,7 @@ virtio_disk_rw(struct buf *b, int write)
 
   // Wait for virtio_disk_intr() to say request has finished.
   while(b->disk == 1) {
+	  
     sleep(b, &disk.vdisk_lock);
   }
 
@@ -301,7 +303,7 @@ virtio_disk_intr()
 
   // the device increments disk.used->idx when it
   // adds an entry to the used ring.
-
+      disk.used->idx++;
   while(disk.used_idx != disk.used->idx){
     __sync_synchronize();
     int id = disk.used->ring[disk.used_idx % NUM].id;

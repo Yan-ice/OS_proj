@@ -225,12 +225,12 @@ uchar initcode[] = {
 void
 userinit(void)
 {
-	printf("Starting user init\n");
   struct proc *p;
 
   p = allocproc();
   initproc = p;
   
+  printf("user proc with id %d create.\n",p->pid);
   // allocate one user page and copy init's instructions
   // and data into it.
   uvminit(p->pagetable, initcode, sizeof(initcode));
@@ -241,6 +241,7 @@ userinit(void)
   p->trapframe->sp = PGSIZE;  // user stack pointer
 
   safestrcpy(p->name, "initcode", sizeof(p->name));
+  printf("path: %s\n",namei("/"));
   p->cwd = namei("/");
 
   p->state = RUNNABLE;
@@ -455,10 +456,10 @@ scheduler(void)
         p->state = RUNNING;
         c->proc = p;
         swtch(&c->context, &p->context);
-
         // Process is done running for now.
         // It should have changed its p->state before coming back.
-        c->proc = 0;
+	c->proc = 0;
+
       }
       release(&p->lock);
     }
@@ -509,7 +510,6 @@ void
 forkret(void)
 {
   static int first = 1;
-
   // Still holding p->lock from scheduler.
   release(&myproc()->lock);
 
@@ -518,7 +518,7 @@ forkret(void)
     // regular process (e.g., because it calls sleep), and thus cannot
     // be run from main().
     first = 0;
-    fsinit(ROOTDEV);
+    fsinit(ROOTDEV); //12010320;
   }
 
   usertrapret();
@@ -530,7 +530,6 @@ void
 sleep(void *chan, struct spinlock *lk)
 {
   struct proc *p = myproc();
-  printf("pid %d sleep.\n",p->pid);
   
   // Must acquire p->lock in order to
   // change p->state and then call sched.

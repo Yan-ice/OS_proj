@@ -26,6 +26,7 @@ trapinit(void)
 void
 trapinithart(void)
 {
+  printf("kernelvec: %x\n",kernelvec);
   w_stvec((uint64)kernelvec);
 }
 
