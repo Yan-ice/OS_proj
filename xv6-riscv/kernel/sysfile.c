@@ -15,6 +15,7 @@
 #include "sleeplock.h"
 #include "file.h"
 #include "fcntl.h"
+#include "vm.h"
 
 // Fetch the nth word-sized system call argument as a file descriptor
 // and return both the descriptor and the corresponding struct file.
@@ -415,8 +416,8 @@ sys_chdir(void)
 uint64
 sys_exec(void)
 {
-	printf("sysexec\n");
   char path[MAXPATH], *argv[MAXARG];
+ 
   int i;
   uint64 uargv, uarg;
 
@@ -484,4 +485,14 @@ sys_pipe(void)
     return -1;
   }
   return 0;
+}
+
+uint64 sys_mmtrace(void){
+	uint64 va;
+	argaddr(0,&va);
+
+	printf("tracing virtual address %x:\n",va);
+	struct proc *p = myproc();
+	trace_mem(p->pagetable,va);
+	return 0;
 }

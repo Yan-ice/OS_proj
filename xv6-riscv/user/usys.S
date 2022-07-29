@@ -105,3 +105,8 @@ uptime:
  li a7, SYS_uptime
  ecall
  ret
+.global mmtrace
+mmtrace:
+ li a7, SYS_mmtrace
+ ecall
+ ret

@@ -1,8 +1,6 @@
 #include "param.h"
-#include "types.h"
-#include "memlayout.h"
+#include "vm.h"
 #include "elf.h"
-#include "riscv.h"
 #include "defs.h"
 #include "fs.h"
 
@@ -63,7 +61,7 @@ kvminit(void)
 // Switch h/w page table register to the kernel's page table,
 // and enable paging.
 void
-kvminithart()
+kvminithart(void)
 {
   w_satp(MAKE_SATP(kernel_pagetable));
   sfence_vma();
@@ -83,13 +81,17 @@ kvminithart()
 //   12..20 -- 9 bits of level-0 index.
 //    0..11 -- 12 bits of byte offset within the page.
 pte_t *
-walk(pagetable_t pagetable, uint64 va, int alloc)
+walk(pagetable_t pagetable, uint64 va, int alloc, int print)
 {
   if(va >= MAXVA)
     panic("walk");
 
   for(int level = 2; level > 0; level--) {
     pte_t *pte = &pagetable[PX(level, va)];
+	  if(print){
+		  printf("[lv%d] table %x, entry %d >> PA %x (PTE%x)\n",
+				  2-level, pagetable, PX(level,va), PTE2PA(*pte), pte);
+	  }
     if(*pte & PTE_V) {
       pagetable = (pagetable_t)PTE2PA(*pte);
     } else {
@@ -99,10 +101,20 @@ walk(pagetable_t pagetable, uint64 va, int alloc)
       *pte = PA2PTE(pagetable) | PTE_V;
     }
   }
- /// printf("get final PTE %x at %dth pte in pagetable %x for VA %x, which PA is %x \n",pagetable[PX(0,va)],PX(0,va),pagetable, va, PTE2PA(pagetable[PX(0,va)]));
+  pte_t final_pte = pagetable[PX(0,va)];
+  if(print){
+	  if((final_pte & PTE_V) == 0){
+		  printf("[lv2] value in PTE %x is invalid.\n",final_pte);
+	  }else{
+            	  printf("[lv2] final PA in PTE %x: %x\n",final_pte, PTE2PA(final_pte));
+	  }
+  }
   return &pagetable[PX(0, va)];
 }
 
+void trace_mem(pagetable_t pagetable, uint64 va){
+	walk(pagetable,va,0,1);
+}
 // Look up a virtual address, return the physical address,
 // or 0 if not mapped.
 // Can only be used to look up user pages.
@@ -115,7 +127,7 @@ walkaddr(pagetable_t pagetable, uint64 va)
   if(va >= MAXVA)
     return 0;
 
-  pte = walk(pagetable, va, 0);
+  pte = walk(pagetable, va, 0, 0);
   if(pte == 0)
     return 0;
   if((*pte & PTE_V) == 0)
@@ -151,10 +163,9 @@ mappages(pagetable_t pagetable, uint64 va, uint64 size, uint64 pa, int perm)
     panic("mappages: size");
   
   a = PGROUNDDOWN(va);
-  printf("mapping VA %x to PA %x in size %x..\n",va,pa,size);
   last = PGROUNDDOWN(va + size - 1);
   for(;;){
-    if((pte = walk(pagetable, a, 1)) == 0)
+    if((pte = walk(pagetable, a, 1, 0)) == 0)
       return -1;
     if(*pte & PTE_V)
       panic("mappages: remap");
@@ -180,7 +191,7 @@ uvmunmap(pagetable_t pagetable, uint64 va, uint64 npages, int do_free)
     panic("uvmunmap: not aligned");
 
   for(a = va; a < va + npages*PGSIZE; a += PGSIZE){
-    if((pte = walk(pagetable, a, 0)) == 0)
+    if((pte = walk(pagetable, a, 0, 0)) == 0)
       panic("uvmunmap: walk");
     if((*pte & PTE_V) == 0)
       panic("uvmunmap: not mapped");
@@ -316,7 +327,7 @@ uvmcopy(pagetable_t old, pagetable_t new, uint64 sz)
   char *mem;
 
   for(i = 0; i < sz; i += PGSIZE){
-    if((pte = walk(old, i, 0)) == 0)
+    if((pte = walk(old, i, 0, 0)) == 0)
       panic("uvmcopy: pte should exist");
     if((*pte & PTE_V) == 0)
       panic("uvmcopy: page not present");
@@ -344,7 +355,7 @@ uvmclear(pagetable_t pagetable, uint64 va)
 {
   pte_t *pte;
   
-  pte = walk(pagetable, va, 0);
+  pte = walk(pagetable, va, 0, 0);
   if(pte == 0)
     panic("uvmclear");
   *pte &= ~PTE_U;
