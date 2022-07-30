@@ -83,6 +83,9 @@ kvminithart(void)
 pte_t *
 walk(pagetable_t pagetable, uint64 va, int alloc, int print)
 {
+  if(print){
+	  printf("tracing virtual address %x:\n",va);
+  }
   if(va >= MAXVA)
     panic("walk");
 
@@ -90,7 +93,7 @@ walk(pagetable_t pagetable, uint64 va, int alloc, int print)
     pte_t *pte = &pagetable[PX(level, va)];
 	  if(print){
 		  printf("[lv%d] table %x, entry %d >> PA %x (PTE%x)\n",
-				  2-level, pagetable, PX(level,va), PTE2PA(*pte), pte);
+				  2-level, pagetable, PX(level,va), PTE2PA(*pte), *pte);
 	  }
     if(*pte & PTE_V) {
       pagetable = (pagetable_t)PTE2PA(*pte);
@@ -103,10 +106,12 @@ walk(pagetable_t pagetable, uint64 va, int alloc, int print)
   }
   pte_t final_pte = pagetable[PX(0,va)];
   if(print){
+          printf("[lv2] table %x, entry %d >> PA %x (PTE%x)\n",pagetable, PX(0,va), PTE2PA(final_pte),final_pte );
+	  unsigned char* pageframe = (unsigned char*)PTE2PA(final_pte);
 	  if((final_pte & PTE_V) == 0){
-		  printf("[lv2] value in PTE %x is invalid.\n",final_pte);
+		  printf("[value] pagetable is invalid.");
 	  }else{
-            	  printf("[lv2] final PA in PTE %x: %x\n",final_pte, PTE2PA(final_pte));
+		  printf("[value] stored in pageframe %x, entry %d >> PA %x.\n",pageframe, va & 0x3FFF,(pageframe+(va&0x3FF)));
 	  }
   }
   return &pagetable[PX(0, va)];

@@ -8,14 +8,25 @@
 #include "kernel/fcntl.h"
 
 int main(int argc, char **argv){
-	fprintf(2, "tracing mem\n");
-	char ch1[4096];
-	char ch2[84];
-	int last = 1;
-	fprintf(2, "awa...");
+	printf("single process test:\n");
+	char *ch1 = (char*)malloc(4096);
+	char *ch2 = (char*)malloc(4096);
+	int *i1 = (int*)malloc(4096*4);
 	mmtrace(ch1);
 	mmtrace(ch2);
-	mmtrace(&last);
+	mmtrace(i1);
+
+	printf("\nimulti process test:\n");
+	if(fork()==0){
+		sleep(1);
+		printf("proc0 - ");
+		mmtrace(ch1);
+	}else{
+		wait(0);
+		sleep(1);
+		printf("proc1 - ");
+		mmtrace(ch1);
+	}
 	exit(0);
 	return 0;
 }

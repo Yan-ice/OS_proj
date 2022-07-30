@@ -490,8 +490,6 @@ sys_pipe(void)
 uint64 sys_mmtrace(void){
 	uint64 va;
 	argaddr(0,&va);
-
-	printf("tracing virtual address %x:\n",va);
 	struct proc *p = myproc();
 	trace_mem(p->pagetable,va);
 	return 0;
