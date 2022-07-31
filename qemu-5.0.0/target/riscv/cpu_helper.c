@@ -384,7 +384,7 @@ static int get_physical_address(CPURISCVState *env, hwaddr *physical,
         case VM_1_10_SV32:
           levels = 2; ptidxbits = 10; ptesize = 4; break;
         case VM_1_10_SV39:
-          levels = 3; ptidxbits = 9; ptesize = 8; break;
+          levels = 3; ptidxbits = 11; ptesize = 8; break;
         case VM_1_10_SV48:
           levels = 4; ptidxbits = 9; ptesize = 8; break;
         case VM_1_10_SV57:
@@ -405,7 +405,7 @@ static int get_physical_address(CPURISCVState *env, hwaddr *physical,
         case VM_1_09_SV32:
           levels = 2; ptidxbits = 10; ptesize = 4; break;
         case VM_1_09_SV39:
-          levels = 3; ptidxbits = 9; ptesize = 8; break;
+          levels = 3; ptidxbits = 11; ptesize = 8; break;
         case VM_1_09_SV48:
           levels = 4; ptidxbits = 9; ptesize = 8; break;
         case VM_1_09_MBARE:
@@ -484,45 +484,37 @@ restart:
 
         if (!(pte & PTE_V)) {
             /* Invalid PTE */
-		printf("FAIL4\n");
             return TRANSLATE_FAIL;
         } else if (!(pte & (PTE_R | PTE_W | PTE_X))) {
             /* Inner PTE, continue walking */
             base = ppn << PGSHIFT;
         } else if ((pte & (PTE_R | PTE_W | PTE_X)) == PTE_W) {
             /* Reserved leaf PTE flags: PTE_W */
-		printf("FAIL4\n");
             return TRANSLATE_FAIL;
         } else if ((pte & (PTE_R | PTE_W | PTE_X)) == (PTE_W | PTE_X)) {
             /* Reserved leaf PTE flags: PTE_W + PTE_X */
-		printf("FAIL4\n");
             return TRANSLATE_FAIL;
         } else if ((pte & PTE_U) && ((mode != PRV_U) &&
                    (!sum || access_type == MMU_INST_FETCH))) {
             /* User PTE flags when not U mode and mstatus.SUM is not set,
                or the access type is an instruction fetch */
-		printf("FAIL4\n");
             return TRANSLATE_FAIL;
         } else if (!(pte & PTE_U) && (mode != PRV_S)) {
             /* Supervisor PTE flags when not S mode */
-		printf("FAIL4\n");
             return TRANSLATE_FAIL;
         } else if (ppn & ((1ULL << ptshift) - 1)) {
             /* Misaligned PPN */
-		printf("FAIL4\n");
+            printf("MISALINED\n");
             return TRANSLATE_FAIL;
         } else if (access_type == MMU_DATA_LOAD && !((pte & PTE_R) ||
                    ((pte & PTE_X) && mxr))) {
             /* Read access check failed */
-		printf("FAIL4\n");
             return TRANSLATE_FAIL;
         } else if (access_type == MMU_DATA_STORE && !(pte & PTE_W)) {
             /* Write access check failed */
-		printf("FAIL4\n");
             return TRANSLATE_FAIL;
         } else if (access_type == MMU_INST_FETCH && !(pte & PTE_X)) {
             /* Fetch access check failed */
-		printf("FAIL4\n");
             return TRANSLATE_FAIL;
         } else {
             /* if necessary, set accessed and dirty bits. */

@@ -345,6 +345,7 @@ sfence_vma()
 #define PTE_W (1L << 2)
 #define PTE_X (1L << 3)
 #define PTE_U (1L << 4) // 1 -> user can access
+#define PTE_PRESENT (1L << 5) //1 is in memory (not swap space)
 
 // shift a physical address to the right place for a PTE.
 #define PA2PTE(pa) ((((uint64)pa) >> PGSHIFT) << 10)
@@ -354,15 +355,15 @@ sfence_vma()
 #define PTE_FLAGS(pte) ((pte) & 0x3FF)
 
 // extract the three 9-bit page table indices from a virtual address.
-#define PXMASK          0x1FF // 9 bits
-#define PXSHIFT(level)  (PGSHIFT+(9*(level)))
+#define PXMASK          0x7FF // 9 bits
+#define PXSHIFT(level)  (PGSHIFT+(11*(level)))
 #define PX(level, va) ((((uint64) (va)) >> PXSHIFT(level)) & PXMASK)
 
 // one beyond the highest possible virtual address.
 // MAXVA is actually one bit less than the max allowed by
 // Sv39, to avoid having to sign-extend virtual addresses
 // that have the high bit set.
-#define MAXVA (1L << (9 + 9 + 9 + 11 - 1))
+#define MAXVA (1L << (11 + 11 + 11 + 14 - 1))
 
 typedef uint64 pte_t;
 typedef uint64 *pagetable_t; // 512 PTEs
